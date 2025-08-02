@@ -22,17 +22,21 @@ class SMGwDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass: HomeAssistant,
+        entry: ConfigEntry,
+        client: Gateway,
     ) -> None:
         super().__init__(
             hass=hass, logger=_LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL
         )
+        self.config_entry = entry
+        self.client = client
 
     async def _async_update_data(self):
         try:
             _LOGGER.debug("Fetching data from API")
-            return await self.config_entry.runtime_data.client.get_data()
+            return await self.client.get_data()
         except Exception as e:
-            _LOGGER.error(e)
+            _LOGGER.error(f"Error in _async_update_data: {e}")
             raise e
 
 

@@ -35,10 +35,6 @@ async def async_setup_entry(
     entry: ConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    coordinator = SMGwDataUpdateCoordinator(
-        hass=hass,
-    )
-
     global SCAN_INTERVAL
     SCAN_INTERVAL = timedelta(
         minutes=entry.options.get(
@@ -82,13 +78,19 @@ async def async_setup_entry(
                 f"Unexpected error, no meter type matching for entry {entry}. Meter type: {entry.data[CONF_METER_TYPE]}"
             )
 
+    coordinator = SMGwDataUpdateCoordinator(
+        hass=hass,
+        entry=entry,
+        client=client,
+    )
+
     entry.runtime_data = Data(
         client=client,
         integration=async_get_loaded_integration(hass, entry.domain),
         coordinator=coordinator,
     )
 
-    await coordinator.async_config_entry_first_refresh()
+    await coordinator.async_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))

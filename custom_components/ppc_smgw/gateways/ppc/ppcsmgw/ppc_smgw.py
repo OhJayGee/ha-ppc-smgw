@@ -39,19 +39,13 @@ class PPCSmgw:
         self.firmware_version = None
 
     def _get_auth(self):
-        auth = httpx.DigestAuth(username=self.username, password=self.password)
-        self.httpx_client.auth = auth
-
-        return auth
+        return httpx.DigestAuth(username=self.username, password=self.password)
 
     def _post_data(self, action):
         return f"tkn={self._token}&action={action}"
 
     async def _login(self):
         self.logger.info("Getting data")
-
-        auth = httpx.DigestAuth(username=self.username, password=self.password)
-        self.httpx_client.auth = auth
 
         # TODO: Find a way to remove the cookie here!
         # See https://github.com/encode/httpx/pull/3065
@@ -65,21 +59,35 @@ class PPCSmgw:
                 self.logger.error("Session cookie still present after deletion")
                 raise SessionCookieStillPresentError
 
+        self.logger.debug(f"Attempting to connect to {self.host} with username: {self.username}")
         try:
             response = await self.httpx_client.get(
                 self.host,
                 timeout=10,
                 auth=self._get_auth(),
             )
+            self.logger.debug(f"Connection successful, status: {response.status_code}")
         except Exception as e:
-            self.logger.error(f"Error connecting to {self.host}: {e}")
+            self.logger.error(f"Error connecting to {self.host}: {type(e).__name__}: {e}")
             raise e
 
+        # Validate session cookie exists
+        if "session" not in response.cookies:
+            self.logger.error(f"No session cookie in response. Available cookies: {list(response.cookies.keys())}")
+            raise Exception("Authentication failed - no session cookie received")
+            
         self._cookies = {"Cookie": response.cookies["session"]}
 
         soup = BeautifulSoup(response.content, "html.parser")
         tags = soup.find_all("input")
+        
+        if not tags:
+            self.logger.error("No input tags found in response, authentication may have failed")
+            self.logger.debug(f"Response content: {response.text[:500]}...")
+            raise Exception("Authentication failed - no token found in response")
+            
         self._token = tags[0].get("value")
+        self.logger.debug(f"Retrieved token: {self._token[:10]}..." if self._token else "No token value")
 
         self.logger.info("Got cookie response, assuming we are logged in")
 
