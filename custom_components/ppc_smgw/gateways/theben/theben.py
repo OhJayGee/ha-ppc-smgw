@@ -4,7 +4,7 @@ import asyncio
 import httpx
 import urllib3
 
-from custom_components.ppc_smgw import Gateway
+from custom_components.ppc_smgw.gateways.gateway import Gateway
 from custom_components.ppc_smgw.gateways.reading import Information, FakeInformation
 from custom_components.ppc_smgw.gateways.theben.conexa.conexa import (
     ThebenConexaClient,

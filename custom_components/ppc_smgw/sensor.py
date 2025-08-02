@@ -56,6 +56,15 @@ class OBISSensor(SMGWEntity, SensorEntity):
         """Return the native value of the sensor."""
         _LOGGER.debug(f"Data: {self.coordinator.data}")
 
+        if self.coordinator.data is None:
+            _LOGGER.debug("No data available from coordinator")
+            return None
+
+        # Guard against data not being Information object
+        if not isinstance(self.coordinator.data, Information):
+            _LOGGER.error(f"Expected Information object, got {type(self.coordinator.data)}: {self.coordinator.data}")
+            return None
+
         data: Information = self.coordinator.data
 
         if self.entity_description.key not in data.readings:
@@ -83,6 +92,15 @@ class LastUpdatedSensor(SMGWEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         """Return the native value of the sensor."""
+
+        if self.coordinator.data is None:
+            _LOGGER.debug("No data available from coordinator")
+            return None
+
+        # Guard against data not being Information object
+        if not isinstance(self.coordinator.data, Information):
+            _LOGGER.error(f"Expected Information object, got {type(self.coordinator.data)}: {self.coordinator.data}")
+            return None
 
         data: Information = self.coordinator.data
 

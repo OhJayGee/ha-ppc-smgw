@@ -73,7 +73,7 @@ class PPCSmgw:
             )
         except Exception as e:
             self.logger.error(f"Error connecting to {self.host}: {e}")
-            return []
+            raise e
 
         self._cookies = {"Cookie": response.cookies["session"]}
 
@@ -103,7 +103,7 @@ class PPCSmgw:
             )
         except Exception as e:
             self.logger.error(f"Error getting meter readings: {e}")
-            return []
+            raise e
 
         self.logger.info("Got meter readings, parsing...")
 
@@ -126,7 +126,7 @@ class PPCSmgw:
             )
         except Exception as e:
             self.logger.error(f"Error getting meter profile: {e}")
-            return []
+            raise e
 
         soup = BeautifulSoup(response.content, "html.parser")
 
@@ -205,7 +205,7 @@ class PPCSmgw:
             self._token = ""
 
             self.logger.error(f"Error logging out: {e}")
-            return []
+            # Don't raise here since logout errors shouldn't break the flow
 
     async def selftest(self):
         """Call the self-test of the SMWG. This reboots the SMGW."""
